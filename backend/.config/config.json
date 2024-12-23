@@ -1,0 +1,14 @@
+{
+    "Postgres": {
+        "Host": "localhost",
+        "Port": 5433,
+        "Database": "course_photos",
+        "User": "user",
+        "Password": "postgres",
+        "TLSConfig": null,
+        "ConnectTimeout": 100
+    },
+    "HTTP": {
+        "Addr": ":5001"
+    }
+}
