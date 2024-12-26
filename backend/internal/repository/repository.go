@@ -91,6 +91,19 @@ func (r *Repository) CreateSession(ctx context.Context, userId int64) (sessionId
 	return sessionId, nil
 }
 
+func (r *Repository) DeleteSession(ctx context.Context, sessionId uuid.UUID) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		queryDeleteSession,
+		sessionId,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *Repository) GetStudio(ctx context.Context, id int64) (res models.Studio, err error) {
 	err = r.db.GetContext(
 		ctx,
@@ -105,13 +118,14 @@ func (r *Repository) GetStudio(ctx context.Context, id int64) (res models.Studio
 	return res, nil
 }
 
-func (r *Repository) GetStudios(ctx context.Context) (res []models.CatalogItem, err error) {
+func (r *Repository) GetStudios(ctx context.Context, skipOwnerUserId int64) (res []models.CatalogItem, err error) {
 	res = make([]models.CatalogItem, 0)
 
 	err = r.db.SelectContext(
 		ctx,
 		&res,
 		queryGetStudios,
+		skipOwnerUserId,
 	)
 	if err != nil {
 		return res, err
@@ -119,19 +133,36 @@ func (r *Repository) GetStudios(ctx context.Context) (res []models.CatalogItem, 
 
 	return res, nil
 }
-func (r *Repository) GetStudioBookings(ctx context.Context, studioId int64, date dates.Date) (res []int, err error) {
+func (r *Repository) GetStudioBookedHours(ctx context.Context, studioId int64, date dates.Date) (res []int, err error) {
 	res = make([]int, 0)
 
 	err = r.db.SelectContext(
 		ctx,
 		&res,
-		queryGetStudioBookings,
+		queryGetStudioBookedHours,
+		studioId,
+		date.String(),
 	)
 	if err != nil {
 		return res, err
 	}
 
 	return res, nil
+}
+func (r *Repository) CreateBooking(ctx context.Context, b models.Booking) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		queryCreateBooking,
+		b.UserId,
+		b.StudioId,
+		b.Date.String(),
+		b.Hours,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Repository) GetMyStudios(ctx context.Context, userId int64) (res []models.Studio, err error) {
@@ -142,6 +173,37 @@ func (r *Repository) GetMyStudios(ctx context.Context, userId int64) (res []mode
 		&res,
 		queryGetMyStudios,
 		userId,
+	)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (r *Repository) GetMyBookings(ctx context.Context, userId int64) (res []models.MyBookingsItem, err error) {
+	res = make([]models.MyBookingsItem, 0)
+
+	err = r.db.SelectContext(
+		ctx,
+		&res,
+		queryGetMyBookings,
+		userId,
+	)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+func (r *Repository) GetMyStudioBookings(ctx context.Context, studioId int64) (res []models.StudioBookingsItem, err error) {
+	res = make([]models.StudioBookingsItem, 0)
+
+	err = r.db.SelectContext(
+		ctx,
+		&res,
+		queryGetMyStudioBookings,
+		studioId,
 	)
 	if err != nil {
 		return res, err
@@ -220,4 +282,29 @@ func (r *Repository) GetPhoto(ctx context.Context, id int64) (res []byte, err er
 	}
 
 	return res, nil
+}
+func (r *Repository) GetBooking(ctx context.Context, id int64) (res models.Booking, err error) {
+	err = r.db.GetContext(
+		ctx,
+		&res,
+		queryGetBooking,
+		id,
+	)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+func (r *Repository) DeleteBooking(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		queryDeleteBooking,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

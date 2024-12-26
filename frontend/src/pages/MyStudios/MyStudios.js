@@ -2,8 +2,10 @@ import React, {useEffect, useId, useRef, useState} from 'react';
 import axios from "axios";
 import {useQuery} from "react-query";
 import {apiErrorHandler} from "utils/api_errors_handler";
-import {Button, Card, Flex, Group, Image, Space, Text} from "@mantine/core";
+import {Button, Card, Flex, Group, Image, Modal, Space, Text} from "@mantine/core";
 import {useNavigate} from "react-router-dom";
+import MyStudioBookings from "pages/MyStudios/MyStudioBookings";
+import {useDisclosure} from "@mantine/hooks";
 
 export default function MyStudios() {
     document.title = 'Мои фотостудии';
@@ -16,6 +18,8 @@ export default function MyStudios() {
             .then(res => res?.data || [])
             .catch(apiErrorHandler)
     );
+    const [selectedStudio, setSelectedStudio] = useState({});
+    const [showBookingsOpened, {open: showBookingsOpen, close: showBookingsClose}] = useDisclosure(false);
 
     return <>
         <Group>
@@ -40,11 +44,12 @@ export default function MyStudios() {
                                    key={photo_index}/>)}
                     </Group>
                     <Group>
-                        <Button variant='light'>
+                        <Button variant='light'
+                        onClick={()=>{
+                            setSelectedStudio(item);
+                            showBookingsOpen();
+                        }}>
                             Посмотреть брони
-                        </Button>
-                        <Button variant='light'>
-                            Редактировать
                         </Button>
                         <Button variant='light'
                                 color='red'>
@@ -55,5 +60,9 @@ export default function MyStudios() {
                 </Card>
             ))}
         </Flex>
+        <Modal opened={showBookingsOpened} onClose={showBookingsClose}
+               title={'Бронирования студии ' + selectedStudio?.name}>
+            <MyStudioBookings studio={selectedStudio}/>
+        </Modal>
     </>
 }

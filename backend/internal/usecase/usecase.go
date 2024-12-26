@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 
 	"course_photos/internal/models"
 	"course_photos/internal/repository"
@@ -85,6 +84,10 @@ func (uc *UseCase) Login(ctx context.Context, req LoginRequest) (sessionId uuid.
 	return sessionId, nil
 }
 
+func (uc *UseCase) Logout(ctx context.Context, sessionId uuid.UUID) error {
+	return uc.r.DeleteSession(ctx, sessionId)
+}
+
 func (uc *UseCase) Auth(ctx context.Context, sessionId uuid.UUID) (user models.User, err error) {
 	userId, err := uc.r.GetSessionUserId(ctx, sessionId)
 	if err != nil {
@@ -118,25 +121,46 @@ func (uc *UseCase) CreateStudio(ctx context.Context, userId int64, req CreateStu
 	})
 }
 
-type UpdateStudioRequest struct {
-	Name        *string       `json:"name"`
-	Address     *string       `json:"address"`
-	Description *string       `json:"description"`
-	PhotosIds   pq.Int64Array `json:"photos_ids"`
-}
+func (uc *UseCase) DeleteMyStudio(ctx context.Context, userId int64, studioId int64) error {
+	s, err := uc.r.GetStudio(ctx, studioId)
+	if err != nil {
+		return err
+	}
 
-func (uc *UseCase) UpdateStudio(ctx context.Context, userId int64, studioId int64, req UpdateStudioRequest) error {
-	return uc.r.UpdateStudio(ctx, userId, studioId)
+	if s.OwnerUserId != userId {
+		return errors.New("invalid studio")
+	}
+
+	err = uc.r.DeleteStudio(ctx, userId, studioId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
-func (uc *UseCase) DeleteStudio(ctx context.Context, userId int64, studioId int64) error {
-	return uc.r.DeleteStudio(ctx, userId, studioId)
+func (uc *UseCase) GetMyStudioBookings(ctx context.Context, userId int64, studioId int64) (res []models.StudioBookingsItem, err error) {
+	s, err := uc.r.GetStudio(ctx, studioId)
+	if err != nil {
+		return res, err
+	}
+
+	if s.OwnerUserId != userId {
+		return res, errors.New("invalid studio")
+	}
+
+	res, err = uc.r.GetMyStudioBookings(ctx, userId)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
 }
 func (uc *UseCase) UploadPhoto(ctx context.Context, userId int64, photo []byte) (id int64, err error) {
 	return uc.r.UploadPhoto(ctx, userId, photo)
 }
 
-func (uc *UseCase) GetStudios(ctx context.Context) ([]models.CatalogItem, error) {
-	return uc.r.GetStudios(ctx)
+func (uc *UseCase) GetStudios(ctx context.Context, userId int64) ([]models.CatalogItem, error) {
+	return uc.r.GetStudios(ctx, userId)
 }
 func (uc *UseCase) GetStudioAvailableHours(
 	ctx context.Context,
@@ -171,12 +195,12 @@ func (uc *UseCase) GetStudioAvailableHours(
 		return hours, errors.New("студия не работает в этот день недели")
 	}
 
-	bookedHours, err := uc.r.GetStudioBookings(ctx, studioId, date)
+	bookedHours, err := uc.r.GetStudioBookedHours(ctx, studioId, date)
 	if err != nil {
 		return hours, err
 	}
 
-	for i := range 23 {
+	for i := range 24 {
 		if slices.Contains(bookedHours, i) {
 			continue
 		}
@@ -186,10 +210,64 @@ func (uc *UseCase) GetStudioAvailableHours(
 
 	return hours, nil
 }
+
+type CreateBookingsRequest struct {
+	StudioId int64      `params:"id"`
+	Date     dates.Date `json:"date"`
+	Hours    []int      `json:"hours"`
+}
+
+func (uc *UseCase) CreateBookings(ctx context.Context, userId int64, req CreateBookingsRequest) error {
+	hours, err := uc.GetStudioAvailableHours(ctx, req.StudioId, req.Date)
+	if err != nil {
+		return err
+	}
+
+	for _, h := range req.Hours {
+		if !slices.Contains(hours, h) {
+			return errors.New("unavailable hour")
+		}
+	}
+
+	for _, h := range req.Hours {
+		err = uc.r.CreateBooking(ctx, models.Booking{
+			Id:        0,
+			UserId:    userId,
+			StudioId:  req.StudioId,
+			Date:      req.Date,
+			Hours:     h,
+			CreatedAt: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 func (uc *UseCase) GetPhoto(ctx context.Context, id int64) ([]byte, error) {
 	return uc.r.GetPhoto(ctx, id)
 }
-
 func (uc *UseCase) GetMyStudios(ctx context.Context, userId int64) ([]models.Studio, error) {
 	return uc.r.GetMyStudios(ctx, userId)
+}
+func (uc *UseCase) GetMyBookings(ctx context.Context, userId int64) ([]models.MyBookingsItem, error) {
+	return uc.r.GetMyBookings(ctx, userId)
+}
+func (uc *UseCase) DeleteMyBooking(ctx context.Context, userId int64, bookingId int64) error {
+	b, err := uc.r.GetBooking(ctx, bookingId)
+	if err != nil {
+		return err
+	}
+
+	if b.UserId != userId {
+		return errors.New("forbidden")
+	}
+
+	err = uc.r.DeleteBooking(ctx, bookingId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

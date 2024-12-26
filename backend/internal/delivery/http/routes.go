@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
 	"course_photos/internal/usecase"
 	"course_photos/pkg/dates"
@@ -48,8 +49,29 @@ func (h *handler) handlerLogin(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusOK)
 }
 
+func (h *handler) handlerLogout(c *fiber.Ctx) error {
+	sessionIdStr := c.Cookies(sessionCookie)
+	if sessionIdStr == "" {
+		return c.SendStatus(http.StatusOK)
+	}
+
+	sessionId, err := uuid.Parse(sessionIdStr)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	err = h.uc.Logout(c.Context(), sessionId)
+	if err != nil {
+		return err
+	}
+
+	h.clearCookie(c, sessionCookie)
+
+	return c.SendStatus(http.StatusOK)
+}
+
 func (h *handler) handlerGetStudios(c *fiber.Ctx) error {
-	data, err := h.uc.GetStudios(c.Context())
+	data, err := h.uc.GetStudios(c.Context(), getUser(c).Id)
 	if err != nil {
 		return err
 	}
@@ -69,12 +91,32 @@ func (h *handler) handlerGetStudioAvailableHours(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	data, err := h.uc.GetStudioAvailableHours(c.Context(), studioId, date)
+	data, err := h.uc.GetStudioAvailableHours(c.Context(), int64(studioId), date)
 	if err != nil {
 		return err
 	}
 
 	return c.Status(http.StatusOK).JSON(data)
+}
+func (h *handler) handlerCreateBookings(c *fiber.Ctx) error {
+	req := usecase.CreateBookingsRequest{}
+
+	err := c.ParamsParser(&req)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	err = c.BodyParser(&req)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	err = h.uc.CreateBookings(c.Context(), getUser(c).Id, req)
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(http.StatusOK)
 }
 func (h *handler) handlerGetPhoto(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
@@ -113,6 +155,27 @@ func (h *handler) handlerGetMyStudios(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(data)
+}
+func (h *handler) handlerGetMyBookings(c *fiber.Ctx) error {
+	data, err := h.uc.GetMyBookings(c.Context(), getUser(c).Id)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(data)
+}
+func (h *handler) handlerDeleteBooking(c *fiber.Ctx) error {
+	bookingId, err := c.ParamsInt("id")
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	err = h.uc.DeleteMyBooking(c.Context(), getUser(c).Id, int64(bookingId))
+	if err != nil {
+		return err
+	}
+
+	return c.SendStatus(http.StatusOK)
 }
 
 func (h *handler) handlerUploadPhoto(c *fiber.Ctx) error {
@@ -164,32 +227,29 @@ func (h *handler) handlerCreateStudio(c *fiber.Ctx) error {
 
 	return c.SendStatus(http.StatusOK)
 }
-func (h *handler) handlerDeleteStudio(c *fiber.Ctx) error {
+func (h *handler) handlerDeleteMyStudio(c *fiber.Ctx) error {
 	studioId, err := c.ParamsInt("id")
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	err = h.uc.DeleteStudio(c.Context(), getUser(c).Id, int64(studioId))
+	err = h.uc.DeleteMyStudio(c.Context(), getUser(c).Id, int64(studioId))
 	if err != nil {
 		return err
 	}
 
 	return c.SendStatus(http.StatusOK)
 }
+func (h *handler) handlerGetMyStudioBookings(c *fiber.Ctx) error {
+	studioId, err := c.ParamsInt("id")
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
 
-//func (h *handler) handlerUpdateStudio(c *fiber.Ctx) error {
-//
-//}
-//
-//func (h *handler) handlerDeleteStudio(c *fiber.Ctx) error {
-//
-//}
-//
-//func (h *handler) handlerGetStudioBookings(c *fiber.Ctx) error {
-//
-//}
-//
-//func (h *handler) handlerBookStudio(c *fiber.Ctx) error {
-//
-//}
+	data, err := h.uc.GetMyStudioBookings(c.Context(), getUser(c).Id, int64(studioId))
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(data)
+}

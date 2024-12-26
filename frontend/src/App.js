@@ -24,7 +24,6 @@ import {
     IconLibraryPhoto,
 } from "@tabler/icons-react";
 import {apiErrorHandler} from "utils/api_errors_handler";
-import Profile from "pages/Profile/Profile";
 import {useDisclosure} from "@mantine/hooks";
 import Catalog from "pages/Catalog/Catalog";
 import MyStudios from "pages/MyStudios/MyStudios";
@@ -32,6 +31,7 @@ import {useQuery} from "react-query";
 import Login from "pages/Login/Login";
 import Registration from "pages/Registration/Registration";
 import CreateStudio from "pages/MyStudios/CreateStudio";
+import MyBookings from "pages/MyBookings/MyBookings";
 
 axios.defaults.withCredentials = true;
 
@@ -41,7 +41,6 @@ function App() {
     const routes = {
         registration: '/registration',
         login: '/login',
-        profile: '/profile',
         catalog:'/catalog',
         my_studios:'/my-studios',
         new_studio:'/new-studio',
@@ -96,7 +95,12 @@ function App() {
                                     size='sm'/>
                         </Group>
                         <Group>
-                            <a href={routes.profile}>{me?.login}</a>
+                            <a href='#' onClick={()=>{
+                                axios
+                                    .delete('/api/logout')
+                                    .catch(apiErrorHandler);
+                                refetch().catch(apiErrorHandler);
+                            }}>{me?.login}</a>
                         </Group>
                     </Group>
                 </AppShell.Header>
@@ -124,11 +128,8 @@ function App() {
                         <Route path={routes.new_studio}
                                element={<CreateStudio/>}/>
                         <Route path={routes.my_bookings}
-                               element={<Catalog/>}/>
-                        <Route path={routes.profile}
-                               element={<Profile/>}/>
+                               element={<MyBookings/>}/>
                         <Route path='*' element={<Navigate to={routes.catalog}/>}/>
-                        {/*<Route path='*' element={<Navigate to={routes.my_studios}/>}/>*/}
                     </Routes>
                     <Outlet/>
                 </AppShell.Main>

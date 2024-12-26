@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -35,6 +36,7 @@ func (h *handler) Run() error {
 func (h *handler) bindRoutes() {
 	h.app.Post("/register", h.handlerRegister)
 	h.app.Post("/login", h.handlerLogin)
+	h.app.Delete("/logout", h.handlerLogout)
 
 	authorizedGroup := h.app.Group("/", h.authMiddleware)
 	{
@@ -43,21 +45,25 @@ func (h *handler) bindRoutes() {
 			meGroup.Get("/", h.handlerGetMe)
 			meGroup.Get("/studios", h.handlerGetMyStudios)
 			meGroup.Post("/studios", h.handlerCreateStudio)
-			meGroup.Patch("/studios/:id", h.handlerUpdateStudio)
-			meGroup.Delete("/studios/:id", h.handlerDeleteStudio)
+			//meGroup.Patch("/studios/:id", h.handlerUpdateMyStudio)
+			meGroup.Delete("/studios/:id", h.handlerDeleteMyStudio)
+			meGroup.Get("/studios/:id/bookings", h.handlerGetMyStudioBookings)
+			meGroup.Get("/bookings", h.handlerGetMyBookings)
+			meGroup.Delete("/bookings/:id", h.handlerDeleteBooking)
 		}
 		authorizedGroup.Get("/studios", h.handlerGetStudios)
 		authorizedGroup.Get("/studios/:id/available-hours", h.handlerGetStudioAvailableHours)
+		authorizedGroup.Post("/studios/:id/bookings", h.handlerCreateBookings)
 		authorizedGroup.Get(
 			"/photo/:id",
 			h.getCacheMiddleware(10*time.Second),
 			h.handlerGetPhoto,
 		)
 		authorizedGroup.Post("/photo", h.handlerUploadPhoto)
-		//authorizedGroup.Put("/studios/:id", h.handlerUpdateStudio)
-		//authorizedGroup.Delete("/studios/:id", h.handlerDeleteStudio)
-		//authorizedGroup.Get("/studios/:id/bookings", h.handlerGetStudioBookings)
-		//authorizedGroup.Post("/studios/:id/book", h.handlerBookStudio)
+	}
+
+	for _, route := range h.app.GetRoutes() {
+		fmt.Println(route.Method, route.Path)
 	}
 }
 

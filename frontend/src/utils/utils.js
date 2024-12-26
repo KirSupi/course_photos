@@ -1,7 +1,3 @@
-export const generatePassword = () => {
-    const length = 8;
-    const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~!@-#$';
-    return Array.from(crypto.getRandomValues(new Uint32Array(length)))
-        .map((x) => characters[x % characters.length])
-        .join('')
+export const formatBookingHours = h => {
+    return  (h < 10 ? '0' : '') + h + ':00-' + ((h + 1) % 24 < 10 ? '0' : '') + ((h + 1) % 24) + ':00';
 }

@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+
+	"course_photos/pkg/dates"
 )
 
 type (
@@ -58,11 +60,37 @@ type (
 	}
 
 	Booking struct {
-		Id        int64       `json:"id" db:"id"`
-		UserId    int64       `json:"user_id" db:"user_id"`
-		StudioId  int64       `json:"studio_id" db:"studio_id"`
-		CreatedAt time.Time   `json:"created_at" db:"created_at"`
-		TimeFrom  BookingTime `json:"time_from" db:"time_from"`
-		TimeTo    BookingTime `json:"time_to" db:"time_to"`
+		Id        int64      `json:"id" db:"id"`
+		UserId    int64      `json:"user_id" db:"user_id"`
+		StudioId  int64      `json:"studio_id" db:"studio_id"`
+		Date      dates.Date `json:"date" db:"date"`
+		Hours     int        `json:"hours" db:"hours"`
+		CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	}
+	MyBookingsItem struct {
+		Id        int64      `json:"id" db:"id"`
+		Date      dates.Date `json:"date" db:"date"`
+		Hours     int        `json:"hours" db:"hours"`
+		CreatedAt time.Time  `json:"created_at" db:"created_at"`
+
+		StudioId          int64         `json:"studio_id" db:"studio_id"`
+		StudioName        string        `json:"studio_name" db:"studio_name"`
+		StudioAddress     string        `json:"studio_address" db:"studio_address"`
+		StudioDescription string        `json:"studio_description" db:"studio_description"`
+		StudioPhotosIds   pq.Int64Array `json:"studio_photos_ids" db:"studio_photos_ids"`
+
+		OwnerUserId int64  `json:"owner_user_id" db:"owner_user_id"`
+		OwnerName   string `json:"owner_name" db:"owner_name"`
+		OwnerPhone  string `json:"owner_phone" db:"owner_phone"`
+	}
+	StudioBookingsItem struct {
+		Id        int64      `json:"id" db:"id"`
+		Date      dates.Date `json:"date" db:"date"`
+		Hours     int        `json:"hours" db:"hours"`
+		CreatedAt time.Time  `json:"created_at" db:"created_at"`
+
+		GuestUserId int64  `json:"guest_user_id" db:"guest_user_id"`
+		GuestName   string `json:"guest_name" db:"guest_name"`
+		GuestPhone  string `json:"guest_phone" db:"guest_phone"`
 	}
 )
