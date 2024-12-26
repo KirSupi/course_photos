@@ -67,12 +67,7 @@ func (uc *UseCase) Login(ctx context.Context, req LoginRequest) (sessionId uuid.
 		return sessionId, err
 	}
 
-	hashedPassword, err := passwords.HashPassword(req.Password)
-	if err != nil {
-		return sessionId, err
-	}
-
-	if user.HashedPassword != hashedPassword {
+	if !passwords.CheckPasswordHash(req.Password, user.HashedPassword) {
 		return sessionId, errors.New("invalid password")
 	}
 
