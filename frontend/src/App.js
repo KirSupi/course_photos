@@ -65,7 +65,7 @@ function App() {
         axios
             .get('/api/me')
             .then(res => res?.data || null)
-            .catch(apiErrorHandler)
+            .catch(()=>{})
     );
 
     return <>
@@ -74,7 +74,7 @@ function App() {
                     <Route path={routes.login}
                            element={<Login refetchMe={refetch} />}/>
                     <Route path={routes.registration}
-                           element={<Registration/>}/>
+                           element={<Registration refetchMe={refetch} />}/>
                     <Route path='*' element={<Navigate to={routes.login}/>}/>
                 </Routes>
                 <Outlet/>
@@ -98,8 +98,12 @@ function App() {
                             <a href='#' onClick={()=>{
                                 axios
                                     .delete('/api/logout')
-                                    .catch(apiErrorHandler);
-                                refetch().catch(apiErrorHandler);
+                                    .then(()=>{
+                                        refetch().catch(()=>{});
+                                    })
+                                    .catch(()=>{
+                                        refetch().catch(()=>{});
+                                    });
                             }}>{me?.login}</a>
                         </Group>
                     </Group>

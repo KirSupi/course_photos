@@ -48,7 +48,7 @@ module.exports = {
         allowedHosts: 'all',
         webSocketServer: 'ws',
         historyApiFallback: true,
-        port: 5000,
+        port: 5002,
         open: true,
         compress: true,
         hot: true,

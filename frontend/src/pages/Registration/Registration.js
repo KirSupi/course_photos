@@ -10,7 +10,7 @@ import {useNavigate} from "react-router-dom";
 import {reverseSorter, getSorter, sorterById} from "utils/sorters";
 import {useForm} from "@mantine/form";
 
-export default function Registration() {
+export default function Registration({refetchMe}) {
     document.title = 'Регистрация';
 
     const navigate = useNavigate();
@@ -46,8 +46,9 @@ export default function Registration() {
                         phone: values.phone,
                     })
                     .then(res => {
-                        if (res.status === 200)
+                        if (res.status === 200) {
                             refetchMe().catch(apiErrorHandler);
+                        }
                     })
                     .catch(apiErrorHandler)
             })}>
