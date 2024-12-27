@@ -143,7 +143,7 @@ func (uc *UseCase) GetMyStudioBookings(ctx context.Context, userId int64, studio
 		return res, errors.New("invalid studio")
 	}
 
-	res, err = uc.r.GetMyStudioBookings(ctx, userId)
+	res, err = uc.r.GetMyStudioBookings(ctx, studioId)
 	if err != nil {
 		return res, err
 	}

@@ -8,10 +8,10 @@ import {notifications} from "@mantine/notifications";
 import {formatDate} from "date-fns";
 import {formatBookingHours} from "utils/utils";
 
-export default function MyStudioBookings({studio}) {
-    const {data: bookings, refetch} = useQuery([`/me/studios/${studio?.id}/bookings`], () =>
+export default function MyStudioBookings({studioId}) {
+    const {data: bookings, refetch} = useQuery([`/me/studios/${studioId}/bookings`], () =>
         axios
-            .get(`/api/me/studios/${studio.id}/bookings`)
+            .get(`/api/me/studios/${studioId}/bookings`)
             .then(res => res?.data || [])
             .catch(apiErrorHandler)
     );

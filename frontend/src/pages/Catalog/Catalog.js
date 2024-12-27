@@ -39,7 +39,7 @@ export default function Catalog() {
 
         useEffect(() => {
             availableHoursRefetch().catch(apiErrorHandler);
-        }, [form.values.date]);
+        }, [form.getValues().date]);
 
         return <>
 

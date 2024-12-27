@@ -62,7 +62,7 @@ export default function MyStudios() {
         </Flex>
         <Modal opened={showBookingsOpened} onClose={showBookingsClose}
                title={'Бронирования студии ' + selectedStudio?.name}>
-            <MyStudioBookings studio={selectedStudio}/>
+            <MyStudioBookings studioId={selectedStudio?.id}/>
         </Modal>
     </>
 }
